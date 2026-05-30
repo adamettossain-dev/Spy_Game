@@ -1,0 +1,1735 @@
+<!DOCTYPE html>
+<html lang="co">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spy Game</title>
+    <link rel="icon" type="image/png" href="spyicon.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-color: #070a12;
+            --card-bg: #0f1626;
+            --input-bg: #070a12;
+            --accent: #6366f1;
+            --accent-glow: rgba(99, 102, 241, 0.25);
+            --accent-hover: #4f46e5;
+            --text: #f8fafc;
+            --text-muted: #475569;
+            --text-light: #94a3b8;
+            --danger: #ef4444;
+            --danger-glow: rgba(239, 68, 68, 0.15);
+            --success: #10b981;
+            --success-glow: rgba(16, 185, 129, 0.15);
+            --border: #1e293b;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Plus Jakarta Sans', 'Segoe UI', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+
+        /* INTRO ANIMATION SCREEN */
+        #intro-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--bg-color);
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            animation: fadeOutOverlay 1s cubic-bezier(0.77, 0, 0.175, 1) forwards;
+            animation-delay: 2s;
+        }
+
+        .intro-logo {
+            font-size: 3rem;
+            font-weight: 800;
+            letter-spacing: -1px;
+            margin-bottom: 12px;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeInUp 0.5s ease forwards 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .intro-logo span { color: var(--danger); }
+        .intro-logo i { color: var(--danger); }
+
+        .intro-sub {
+            font-size: 0.85rem;
+            color: #475569;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            opacity: 0;
+            animation: fadeIn 0.6s ease forwards 0.8s;
+        }
+
+        .intro-loader {
+            width: 32px;
+            height: 32px;
+            border: 2px solid #1e293b;
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            margin-top: 30px;
+            animation: spin 0.7s linear infinite;
+        }
+
+        /* MAIN APP CONTAINER */
+        .container {
+            width: 100%;
+            max-width: 420px;
+            background: var(--card-bg);
+            padding: 40px 30px;
+            border-radius: 28px;
+            border: 1px solid var(--border);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            text-align: center;
+            opacity: 0;
+            transform: scale(0.96);
+            animation: showMainContainer 0.6s cubic-bezier(0.34, 1.3, 0.64, 1) forwards 2.3s;
+        }
+
+        /* LOGO SITE LFO9 */
+        .brand-logo {
+            margin-bottom: 35px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+        
+        .logo-icon-box {
+            width: 54px;
+            height: 54px;
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .logo-icon-box i {
+            font-size: 1.6rem;
+            color: var(--danger);
+            animation: pulseGlow 2.5s infinite ease-in-out;
+        }
+
+        .brand-logo h2 {
+            font-size: 1.4rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            text-transform: uppercase;
+        }
+        .brand-logo h2 span { color: var(--danger); }
+
+        /* SCREENS */
+        .screen { display: none; }
+        .screen.active { 
+            display: block; 
+            animation: screenIn 0.4s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+            text-align: left;
+            position: relative;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px;
+            color: var(--text-light);
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-wrapper i.main-icon {
+            position: absolute;
+            left: 16px;
+            color: #64748b;
+            font-size: 1.05rem;
+            z-index: 2;
+        }
+
+        input {
+            width: 100%;
+            padding: 15px 16px 15px 48px;
+            background: var(--input-bg);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            color: white;
+            font-size: 0.95rem;
+            font-weight: 600;
+            outline: none;
+            transition: all 0.3s;
+        }
+
+        /* CUSTOM DROPDOWN SYSTEM */
+        .custom-select-box {
+            position: relative;
+            width: 100%;
+            user-select: none;
+        }
+
+        .select-trigger {
+            width: 100%;
+            padding: 15px 16px 15px 48px;
+            background: var(--input-bg);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            color: white;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: all 0.3s;
+        }
+
+        .select-trigger:hover, .select-trigger.open-active {
+            border-color: var(--accent);
+        }
+
+        .select-trigger i.fa-chevron-down {
+            font-size: 0.85rem;
+            color: #64748b;
+            transition: transform 0.3s;
+        }
+
+        .select-trigger.open-active i.fa-chevron-down {
+            transform: rotate(180deg);
+            color: var(--accent);
+        }
+
+        .select-options-panel {
+            position: absolute;
+            top: calc(100% + 8px);
+            left: 0;
+            width: 100%;
+            background: #0f1626;
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            max-height: 240px;
+            overflow-y: auto;
+            z-index: 99;
+            box-shadow: 0 15px 30px rgba(0,0,0,0.6);
+            display: none;
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: opacity 0.2s, transform 0.2s;
+        }
+
+        .select-options-panel.show {
+            display: block;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .option-item {
+            padding: 14px 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: var(--text-light);
+            transition: all 0.2s;
+        }
+
+        .option-item i {
+            width: 20px;
+            text-align: center;
+            font-size: 1rem;
+            color: #64748b;
+        }
+
+        .option-item:hover, .option-item.selected-match {
+            background: rgba(99, 102, 241, 0.1);
+            color: white;
+        }
+        
+        .option-item:hover i, .option-item.selected-match i {
+            color: var(--accent);
+        }
+
+        /* MULTI-SELECT ACTIVE SELECTION STYLING */
+        .option-item.active-selection {
+            background: rgba(99, 102, 241, 0.2) !important;
+            border-left: 3px solid var(--accent);
+            padding-left: 13px;
+            color: white !important;
+            position: relative;
+            box-shadow: inset 0 0 15px rgba(99, 102, 241, 0.15);
+        }
+        
+        .option-item.active-selection i {
+            color: var(--accent) !important;
+            font-weight: 700;
+        }
+        
+        .option-item.active-selection::before {
+            content: "✓";
+            position: absolute;
+            right: 14px;
+            font-weight: 800;
+            color: var(--accent);
+            font-size: 1.1rem;
+        }
+
+        /* SCROLLBAR CUSTOM FOR PANEL */
+        .select-options-panel::-webkit-scrollbar { width: 6px; }
+        .select-options-panel::-webkit-scrollbar-track { background: transparent; }
+        .select-options-panel::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; }
+
+        /* BUTTONS */
+        button {
+            width: 100%;
+            padding: 16px;
+            background: var(--accent);
+            border: none;
+            border-radius: 14px;
+            color: white;
+            font-size: 0.95rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 14px var(--accent-glow);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        button:hover { 
+            background: var(--accent-hover);
+            transform: translateY(-1px);
+        }
+        button:active { transform: translateY(0); }
+
+        /* PREMIUM SECONDARY BUTTON FOR TOGGLING NAMES */
+        .btn-toggle-names {
+            background: #1e1e2e;
+            border: 1px solid #3f3f56;
+            color: var(--text-light);
+            padding: 10px 14px;
+            font-size: 0.85rem;
+            border-radius: 10px;
+            margin-top: 10px;
+            box-shadow: none;
+            width: auto;
+        }
+        .btn-toggle-names:hover {
+            background: #2a2a40;
+            color: white;
+            border-color: var(--accent);
+        }
+
+        /* SECRET CARD DESIGN */
+        .card-wrapper {
+            perspective: 1000px;
+            margin: 25px 0;
+        }
+
+        .card-box {
+            background: var(--input-bg);
+            padding: 45px 20px;
+            border-radius: 20px;
+            border: 1px dashed var(--border);
+            min-height: 200px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+            gap: 15px;
+        }
+
+        .card-box:hover {
+            border-color: #334155;
+            background: #0b111e;
+        }
+
+        /* Dynamic Reveals Colors */
+        .card-civilian {
+            background: #04241a !important;
+            border: 1px solid var(--success) !important;
+            box-shadow: 0 15px 30px var(--success-glow);
+        }
+
+        .card-spy {
+            background: #2d0606 !important;
+            border: 1px solid var(--danger) !important;
+            box-shadow: 0 15px 30px var(--danger-glow);
+        }
+
+        .secret-word {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: white;
+            letter-spacing: -0.5px;
+        }
+
+        .spy-title {
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: #fee2e2;
+        }
+
+        .spy-hint {
+            font-size: 0.9rem;
+            display: inline-block;
+            margin-top: 4px;
+            color: #fca5a5;
+            font-weight: 600;
+            background: rgba(239, 68, 68, 0.2);
+            padding: 5px 14px;
+            border-radius: 20px;
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        /* 3D FLIP CARD PREMIUM ANIMATION */
+        .flip-card-container {
+            perspective: 1000px;
+            width: 100%;
+            height: 220px;
+            cursor: pointer;
+            margin: 25px 0;
+        }
+
+        .flip-card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            transform-style: preserve-3d;
+        }
+
+        .flip-card-inner.flipped {
+            transform: rotateY(180deg);
+        }
+
+        .flip-card-front,
+        .flip-card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            border-radius: 20px;
+            border: 1px dashed var(--border);
+            gap: 6px;
+            padding: 20px;
+        }
+
+        .flip-card-front {
+            background: var(--input-bg);
+            color: var(--text-light);
+            border-color: #334155;
+        }
+
+        .flip-card-front:hover {
+            border-color: var(--accent);
+            background: #0b111e;
+        }
+
+        .flip-card-back {
+            background: var(--input-bg);
+            transform: rotateY(180deg);
+            border: 1px solid var(--border);
+            transition: all 0.4s ease;
+        }
+
+        .flip-card-back.glow-citizen {
+            background: #04241a !important;
+            border: 1px solid var(--success) !important;
+            box-shadow: 0 0 20px var(--success), 0 0 40px rgba(16, 185, 129, 0.3), inset 0 0 20px rgba(16, 185, 129, 0.1);
+        }
+
+        .flip-card-back.glow-spy {
+            background: #2d0606 !important;
+            border: 1px solid var(--danger) !important;
+            box-shadow: 0 0 20px var(--danger), 0 0 40px rgba(239, 68, 68, 0.3), inset 0 0 20px rgba(239, 68, 68, 0.1);
+        }
+
+        .flip-card-role-icon {
+            font-size: 2.5rem;
+            margin-bottom: 12px;
+            filter: drop-shadow(0 0 8px currentColor);
+        }
+
+        .flip-card-role-title {
+            font-size: 1.4rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 16px;
+        }
+
+        .flip-card-secret-word {
+            font-size: 2rem;
+            font-weight: 800;
+            color: white;
+            letter-spacing: -0.5px;
+            text-align: center;
+            word-wrap: break-word;
+        }
+
+        .flip-card-category {
+            font-size: 0.85rem;
+            margin-top: 10px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            border: 1px solid currentColor;
+            background: rgba(255, 255, 255, 0.05);
+            opacity: 0.8;
+            text-align: center;
+        }
+
+        /* Front card text */
+        .flip-card-front i {
+            font-size: 2.2rem;
+            color: var(--accent);
+            animation: pulseGlowCard 2s infinite ease-in-out;
+        }
+
+        .flip-card-front span {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #64748b;
+        }
+
+        /* Next button disabled state */
+        #next-player-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        #next-player-btn:not(:disabled):hover {
+            background: var(--accent-hover);
+        }
+
+        /* Additional pulse animation for front card */
+        @keyframes pulseGlowCard {
+            0%, 100% { 
+                filter: drop-shadow(0 0 2px var(--accent));
+                transform: scale(1);
+            }
+            50% { 
+                filter: drop-shadow(0 0 8px var(--accent));
+                transform: scale(1.05);
+            }
+        }
+
+        .player-turn {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #f1f5f9;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* KEYFRAMES */
+        @keyframes fadeIn { to { opacity: 1; } }
+        @keyframes fadeInUp { to { opacity: 1; transform: translateY(0); } }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes fadeOutOverlay {
+            to { opacity: 0; visibility: hidden; }
+        }
+        @keyframes showMainContainer {
+            to { opacity: 1; transform: scale(1); }
+        }
+        @keyframes screenIn {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes pulseGlow {
+            0%, 100% { filter: drop-shadow(0 0 2px rgba(239,68,68,0.4)); transform: scale(1); }
+            50% { filter: drop-shadow(0 0 10px rgba(239,68,68,0.7)); transform: scale(1.03); }
+        }
+
+        body {
+            background-color: #0c0c14;
+            font-family: 'Poppins', sans-serif;
+        }
+        .screen { display: none; }
+        .screen.active { display: block; }
+        .form-group label {
+            color: #fff;
+            margin-bottom: 10px;
+        }
+
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        /* Styling dial l-wrapper l-jdid */
+        .custom-number-input {
+            display: inline-flex;
+            align-items: center;
+            background-color: #1e1e2e; 
+            border: 1px solid #3f3f56;
+            border-radius: 12px;
+            padding: 4px 12px;
+            gap: 10px;
+            height: 38px;
+        }
+
+        .custom-number-input .main-icon {
+            color: #8b5cf6; 
+            font-size: 15px;
+            margin-right: 7px;
+        }
+
+        .custom-number-input input[type="number"] {
+            width: 60px;               
+            border: none;
+            text-align: center;
+            font-size: 20px;          
+            font-weight: 700;          
+            color: white !important; 
+            background: transparent;
+            outline: none;
+            padding: 6px 0;
+            margin: 0;
+        }
+        
+        .custom-number-input input[type="number"]::-webkit-outer-spin-button,
+        .custom-number-input input[type="number"]::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        .custom-number-input button {
+            background: #2a2a40;
+            border: none;
+            color: #a7a7cc;
+            width: 3px;
+            height: 3px;
+            font-size: 13px;
+            border-radius: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .custom-number-input button:hover {
+            background: #8b5cf6;
+            color: #ffffff;
+        }
+
+        /* S-smiyat dynamic inputs container */
+        .names-container {
+            margin-top: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-height: 200px; 
+            overflow-y: auto;
+            padding-right: 5px;
+        }   
+
+        .name-input-wrapper {
+            display: flex;
+            align-items: center;
+            background: #1e1e2e;
+            border: 1px solid #3f3f56;
+            border-radius: 10px;
+            padding: 0px 12px;
+            transition: border-color 0.2s ease;
+        }
+
+        .name-input-wrapper:focus-within {
+            border-color: #8b5cf6;
+        }
+
+        .player-number {
+            color: #8b5cf6;
+            font-weight: bold;
+            font-size: 14px;
+            margin-right: 12px;
+            min-width: 25px;
+        }
+
+        .player-name-input {
+            background: transparent;
+            border: none;
+            outline: none;
+            color: #ffffff;
+            font-size: 15px;
+            width: 100%;
+        }
+
+        .player-name-input::placeholder {
+            color: #64748b;
+            font-style: italic;
+        }
+
+        /* Animation d l-pulsing o l-khouf dial l-wqt l-wâfe9 */
+        .timer-circle.timer-urgent {
+            border-color: #ef4444 !important;
+            box-shadow: 0 0 20px rgba(239, 68, 68, 0.6) !important;
+            animation: timerPulse 1s infinite alternate;
+        }
+
+        .timer-circle.timer-urgent i, 
+        .timer-circle.timer-urgent span {
+            color: #f87171 !important;
+        }
+
+        @keyframes timerPulse {
+            0% { transform: scale(1); }
+            100% { transform: scale(1.08); }
+        }
+
+        /* Overlay lli kay-ghwtti l-ghorfa d l-le3b كاملة */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85); /* background transparent mdeleml */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999; /* bach t-tla3 foq kolshi */
+            opacity: 1;
+            transition: opacity 0.3s ease;
+        }
+
+        /* Sandoq l-Popup */
+        .modal-content {
+            background: #151a22; /* Nafs dark background d l-le3ba */
+            border: 2px solid #ff4a4a; /* Border b l-7mer neon */
+            box-shadow: 0 0 20px rgba(255, 74, 74, 0.4);
+            padding: 30px;
+            border-radius: 16px;
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+            transform: scale(1);
+            transition: transform 0.3s ease;
+            color: #fff;
+            font-family: sans-serif;
+        }
+
+        .modal-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            animation: timerPulse 1s infinite alternate; /* Nafs pulse d timer */
+        }
+
+        .modal-content h2 {
+            font-size: 1.6rem;
+            margin-bottom: 10px;
+            color: #ff4a4a; /* 3onwan b l-7mer */
+        }
+
+        .modal-content p {
+            font-size: 1rem;
+            color: #a0aec0;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        /* Bouton OK dyal l-Popup */
+        #close-alert-btn {
+            background: linear-gradient(135deg, #ff4a4a, #b32424);
+            color: white;
+            border: none;
+            padding: 12px 35px;
+            font-size: 1rem;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(255, 74, 74, 0.3);
+            transition: all 0.2s ease;
+        }
+
+        #close-alert-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(255, 74, 74, 0.5);
+        }
+
+        /* 1. L-khwbya d l-3anassir lli khassha t-bqa mkhbya (CRITICAL) */
+        .hidden {
+            display: none !important;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        /* 2. S-style d l-Overlay dyal l-Alert (Premium Dark Blur) */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(10, 15, 26, 0.9); /* Background transparent mdelem */
+            backdrop-filter: blur(6px); /* Blur d l-khlfiya */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 99999; /* Foq kolshi overlay */
+            padding: 20px;
+        }
+
+        /* 3. Sandoq d l-Popup */
+        .modal-content {
+            background: #1e293b; /* Nafs dark vibe dyal screen-play */
+            border: 2px solid #ef4444; /* Border neon b l-7mer d l-khatar */
+            box-shadow: 0 0 25px rgba(239, 68, 68, 0.35);
+            padding: 30px;
+            border-radius: 16px;
+            text-align: center;
+            max-width: 400px;
+            width: 100%;
+            animation: alertSpawn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .modal-icon {
+            font-size: 3rem;
+            margin-bottom: 12px;
+        }
+
+        .modal-content h2 {
+            font-size: 1.5rem;
+            color: #ef4444;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .modal-content p {
+            font-size: 0.95rem;
+            color: #94a3b8;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        /* 4. Bouton "OK" d l-Alert */
+        #close-alert-btn {
+            background: linear-gradient(135deg, #ef4444, #b91c1c);
+            color: white;
+            border: none;
+            padding: 12px 35px;
+            font-size: 1rem;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+            transition: all 0.2s ease;
+        }
+
+        #close-alert-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 18px rgba(239, 68, 68, 0.5);
+        }
+
+        /* Animation khfifa d pop-up mnin i-bân */
+        @keyframes alertSpawn {
+            from { transform: scale(0.8); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        /* 5. Custom scrollbar l s-sandoq d l-adwar mnin i-kouno la la3ibin ktsar */
+        #roles-summary-list::-webkit-scrollbar {
+            width: 6px;
+        }
+        #roles-summary-list::-webkit-scrollbar-track {
+            background: #1e293b;
+        }
+        #roles-summary-list::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+
+<audio id="bg-mystery-music" loop>
+    <source src="mystery1.mp3" type="audio/mpeg">
+</audio>
+
+<audio id="audio-tiktak" loop src="tiktak.mp3" type="audio/mpeg"></audio>
+
+<div id="intro-overlay">
+    <div class="intro-logo"><i class="fa-solid fa-user-secret"></i> SPY<span>GAME</span></div>
+    <div class="intro-sub">Ch7al 9dk Tkhba</div>
+    <div class="intro-loader"></div>
+</div>
+
+<div class="container">
+    <div class="brand-logo">
+        <div class="logo-icon-box">
+            <i class="fa-solid fa-user-secret"></i>
+        </div>
+        <h2>SPY<span>GAME</span></h2>
+    </div>
+
+    <div id="screen-setup" class="screen active">
+        <div class="form-group" style="text-align: center;">
+            <label style="text-align: left;">Ch7al d l-la3ibin m3akom?</label>
+        
+            <div class="custom-number-input" style="margin-bottom: 10px;">
+                <i class="fa-solid fa-users main-icon"></i>
+                
+                <button type="button" class="btn-minus" onclick="decrementPlayers()">
+                    <i class="fa-solid fa-minus"></i>
+                </button>
+                
+                <input type="number" id="total-players" value="4" min="3" max="12" readonly>
+                
+                <button type="button" class="btn-plus" onclick="incrementPlayers()">
+                    <i class="fa-solid fa-plus"></i>
+                </button>
+            </div>
+
+            <div>
+                <button type="button" id="toggle-names-btn" class="btn-toggle-names" onclick="toggleNamesSection()">
+                    <i class="fa-solid fa-pen-to-square"></i> Modifi Smiyat l-La3ibin (Ikhtiyari)
+                </button>
+            </div>
+        </div>
+
+        <div id="players-names-container" class="names-container" style="display: none;"></div>
+        
+        <div class="form-group" style="margin-top: 20px;">
+            <label>L-Catégorie dyal l-kelmat</label>
+            
+            <div class="custom-select-box">
+                <div class="input-wrapper">
+                    <i id="selected-icon" class="fa-solid fa-layer-group main-icon"></i>
+                    <div class="select-trigger" id="select-trigger" onclick="toggleDropdown()">
+                        <span id="selected-text">Koulchi (Mélange)</span>
+                        <i class="fa-solid fa-chevron-down"></i>
+                    </div>
+                </div>
+                
+                <div class="select-options-panel" id="options-panel">
+                    <div class="option-item active-selection" onclick="selectOption('all', 'Koulchi (Mélange)', 'fa-solid fa-layer-group')">
+                        <i class="fa-solid fa-layer-group"></i> Koulchi (Mélange)
+                    </div>
+                    <div class="option-item" onclick="selectOption('animals', 'Hayawanat', 'fa-solid fa-paw')">
+                        <i class="fa-solid fa-paw"></i> Hayawanat
+                    </div>
+                    <div class="option-item" onclick="selectOption('makla', 'Makla', 'fa-solid fa-utensils')">
+                        <i class="fa-solid fa-utensils"></i> Makla
+                    </div>
+                    <div class="option-item" onclick="selectOption('aflam', 'Cinema', 'fa-solid fa-film')">
+                        <i class="fa-solid fa-film"></i> Cinema
+                    </div>
+                    <div class="option-item" onclick="selectOption('sport', 'Sports', 'fa-solid fa-soccer-ball')">
+                        <i class="fa-solid fa-soccer-ball"></i> Sports
+                    </div>
+                    <div class="option-item" onclick="selectOption('flags', 'Boldan', 'fa-solid fa-earth-africa')">
+                        <i class="fa-solid fa-earth-africa"></i> Boldan
+                    </div>
+                    <div class="option-item" onclick="selectOption('objects', 'Achya2', 'fa-solid fa-screwdriver-wrench')">
+                        <i class="fa-solid fa-screwdriver-wrench"></i> Achya2
+                    </div>
+                    <div class="option-item" onclick="selectOption('amakin', 'Amakin', 'fa-solid fa-building')">
+                        <i class="fa-solid fa-building"></i> Amakin
+                    </div>
+                    <div class="option-item" onclick="selectOption('anime', 'Anime', 'fa-solid fa-torii-gate')">
+                        <i class="fa-solid fa-torii-gate"></i> Anime
+                    </div>
+                    <div class="option-item" onclick="selectOption('tech', 'Technologie', 'fa-solid fa-code')">
+                        <i class="fa-solid fa-code"></i> Technologie
+                    </div>
+                    <div class="option-item" onclick="selectOption('mihan', 'Mihan', 'fa-solid fa-briefcase')">
+                        <i class="fa-solid fa-briefcase"></i> Mihan
+                    </div>
+                    <div class="option-item" onclick="selectOption('marcat', 'Marques', 'fa-solid fa-copyright')">
+                        <i class="fa-solid fa-copyright"></i> Marques
+                    </div>
+                    <div class="option-item" onclick="selectOption('games', 'Al3ab', 'fa-solid fa-gamepad')">
+                        <i class="fa-solid fa-gamepad"></i> Al3ab
+                    </div>
+                    <div class="option-item" onclick="selectOption('celebs', 'Chakhssiyat', 'fa-solid fa-star')">
+                        <i class="fa-solid fa-star"></i> Chakhssiyat
+                    </div>
+                    <div class="option-item" onclick="selectOption('na9l', 'Wassa2il Na9l', 'fa-solid fa-rocket')">
+                        <i class="fa-solid fa-rocket"></i> Wassa2il Na9l
+                    </div>
+
+                    <div class="option-item" onclick="selectOption('alwan', 'Alwân', 'fa-solid fa-palette')">
+                        <i class="fa-solid fa-palette"></i> Alwân
+                    </div>
+                    <div class="option-item" onclick="selectOption('malabis', 'Malâbis', 'fa-solid fa-shirt')">
+                        <i class="fa-solid fa-shirt"></i> Malâbis
+                    </div>
+                    <div class="option-item" onclick="selectOption('cartoons', 'Cartoons / Spacetoon', 'fa-solid fa-tv')">
+                        <i class="fa-solid fa-tv"></i> Cartoons / Spacetoon
+                    </div>
+                    <div class="option-item" onclick="selectOption('traditions_marocaine', 'Taqâfa Mghribiya', 'fa-solid fa-mortar-pestle')">
+                        <i class="fa-solid fa-mortar-pestle"></i> Taqâfa Mghribiya
+                    </div>
+                    <div class="option-item" onclick="selectOption('tabi3a_kawn', 'Ṭabi3a o Kawn', 'fa-solid fa-user-astronaut')">
+                        <i class="fa-solid fa-user-astronaut"></i> Ṭabi3a o Kawn
+                    </div>
+                </div>
+            </div>
+        </div>       
+
+        <button onclick="startGame()"><i class="fa-solid fa-play"></i> Bda l-Match</button>
+    </div>
+
+    <div id="screen-distribute" class="screen">
+        <div class="player-turn" id="player-title"><i class="fa-solid fa-user"></i> Joueur 1</div>
+        <p style="color: #64748b; font-size: 0.85rem; margin-top: 6px;">Cliqui 3la l-carte bach t-kchef sirrek ghir bo7dek</p>
+        
+        <div class="flip-card-container" id="flipCardContainer" onclick="flipCard()">
+            <div class="flip-card-inner" id="flipCardInner">
+                <!-- FRONT SIDE -->
+                <div class="flip-card-front">
+                    <i class="fa-solid fa-user-secret"></i>
+                    <span>Chof l-Kelma</span>
+                </div>
+                <!-- BACK SIDE -->
+                <div class="flip-card-back" id="cardBackView">
+                    <i class="flip-card-role-icon" id="cardRoleIcon"></i>
+                    <div class="flip-card-role-title" id="cardRoleTitle"></div>
+                    <div class="flip-card-secret-word" id="cardSecretWord"></div>
+                    <div class="flip-card-category" id="cardCategory" style="display: none;"></div>
+                </div>
+            </div>
+        </div>
+
+        <button id="next-player-btn" onclick="nextPlayer()" disabled style="background: #1e293b; box-shadow: none; color: #f1f5f9;">
+            La3ib li morah <i class="fa-solid fa-arrow-right"></i>
+        </button>
+    </div>
+
+    <div id="screen-play" class="screen">
+        <i class="fa-solid fa-circle-check" style="font-size: 2.8rem; color: var(--success); margin-bottom: 16px;"></i>
+        <h3 style="font-size: 1.35rem; font-weight: 700;">Koulchi khad Kelmto db!</h3>
+        <p style="margin-top: 14px; margin-bottom: 25px; color: #94a3b8; font-size: 0.9rem; line-height: 1.6; text-align: center;">
+            Db dowro l-hdra binatkom b l-fann o t-khebya. <br><br>
+            <span style="color: var(--danger); font-weight: 700;"><i class="fa-solid fa-triangle-exclamation"></i> 7adari:</span> Twa7ed fikom ma3arf ch7al men Spy m3akom f had l-round. I9der ykon m3akom <span style="color: white; font-weight:600;">0, 1, 2, aw aktar</span>.
+        </p>
+
+        <div class="game-timer-wrapper" style="margin-bottom: 30px; display: flex; justify-content: center;">
+            <div class="timer-circle" style="display: flex; flex-direction: column; align-items: center; justify-content: center; background: #1e293b; border: 3px solid #334155; width: 120px; height: 120px; border-radius: 50%; box-shadow: 0 0 15px rgba(0,0,0,0.3); transition: all 0.4s ease;">
+                <i class="fa-solid fa-hourglass-start" style="font-size: 1.3rem; color: #38bdf8; margin-bottom: 6px;"></i>
+                <span id="game-countdown-text" style="font-size: 1.6rem; font-weight: 700; font-family: monospace; color: #f1f5f9;">03:00</span>
+            </div>
+        </div>
+
+        <div id="reveal-roles-section" class="hidden" style="text-align: center; margin-bottom: 25px; width: 100%;">
+            <button id="reveal-btn" type="button" style="background: linear-gradient(135deg, #38bdf8, #0284c7); color: white; padding: 12px 25px; border-radius: 8px; font-weight: bold; cursor: pointer; border: none; font-size: 1rem; box-shadow: 0 4px 15px rgba(56, 189, 248, 0.2); width: 100%; transition: all 0.2s ease;">
+                👁️ Kashf l-Adwar dyal gaa3 l-La3ibin
+            </button>
+
+            <div id="roles-summary-list" class="hidden" style="margin-top: 15px; background: #1e293b; border: 1px solid #334155; padding: 15px; border-radius: 12px; text-align: left; max-height: 250px; overflow-y: auto;">
+                <h4 style="color: #38bdf8; text-align: center; margin-bottom: 12px; font-size: 1rem; border-bottom: 1px solid #334155; padding-bottom: 8px;">📋 L-Lista l-7aqíqíya d l-Match:</h4>
+                <ul id="roles-ul" style="list-style: none; padding: 0; margin: 0;">
+                    </ul>
+            </div>
+        </div>
+
+        <button onclick="resetGame()"><i class="fa-solid fa-rotate-left"></i> Re-bda Match Jdid</button>
+    </div>
+    <div id="custom-alert" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div class="modal-icon">⏱️</div>
+            <h2>Sâla l-Wqt dyal l-Hadra!</h2>
+            <p>Dâba wssal wa9t l-Vote direct! Nktashfo chkon huwa l-Spy!</p>
+            <button id="close-alert-btn">OK</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const database = {
+        animals: [
+            "Sbe3 (Lion)", "Nmer (Tigre)", "Kelb (Chien)", "Mouch (Chat)", 
+            "Zraffa (Girafe)", "Fil (Éléphant)", "Ghelal (Escargot)", "Froukh (Oiseau)", 
+            "7sn (Cheval)", "7mar (Âne)", "Dolfin", "Requin (7out l-9rch)", 
+            "Dbe7 (Ours)", "Dîb (Loup)", "9rd (Singe)", "Gorille", 
+            "Frouj (Coq)", "Djaja (Poule)", "7awli (Mouton)", "Me3za (Chèvre)", 
+            "9neyya (Lapin)", "Far (Souris)", "Tbe3 (Hyène)", "Tha3lab (Renard)", 
+            "7nes (Serpent)", "Boubreis (Lézard)", "Nser (Aigle)", "7mama (Pigeon)", 
+            "Chameau (Jmel)", "Lama", "Timsa7 (Crocodile)", "Sba7 (Hippopotame)", 
+            "Chwâfa (Chouette)", "Khofach (Chauve-souris)", "Bat9a (Canard)", "Babagha2 (Perroquet)", 
+            "Kangourou", "Fahed (Guépard)", "Khzir (Chon)", "Penguin (Batri9)", "Koala", "Panther"
+        ],
+        makla: [
+            "Tomate", "Ketchup", "Kahwa", "Atay", "Burger", "Pizza", "Chwâ", "Kefta", 
+            "Chocola", "Nutella", "Hlib", "Lben", "L-Formage", "Kiri", "Tfâ7", "Bnan", 
+            "Couscous", "Tajine", "Panini", "Tacos", "Meloui", "Baghrir", "Hrafech (Chips)", 
+            "Popcorn", "Sandwich", "Shawarma", "L-7out (Poisson)", "Crevette", "Chlada (Salade)", 
+            "Soupe (7rira)", "Lmonad (Coca)", "7asir (Jus)", "Dlla7 (Pastèque)", "Suwla (Melon)", 
+            "Batata", "Khizzo (Carotte)", "Basla", "Touma (Ail)", "Dجاج (Poulet)", 
+            "L-7em (Viande)", "Sfenzj", "Beignet (Donut)", "Rouz (Riz)", "L-9atniya (Lentilles)",
+            "Pastilla", "Rfissa", "Harira", "Briouat", "Zaalouk", "Bissara", "Spaghetti", "Lasagne"
+        ],
+        aflam: [
+            "Batman", "Spiderman", "Cinema", "Netflix", "Al Pacino", "Robert De Niro", 
+            "Action", "Horreur", "Breaking Bad", "Prison Break", "Peaky Blinders", "Narcos", 
+            "Joker", "Hollywood", "Bollywood", "Iron Man", "Thor", "Avatar", "Titanic", 
+            "Game of Thrones", "Vikings", "Squid Game", "Money Heist (La Casa)", 
+            "Directeur (Réalisateur)","Outer Banks", "Acteur", "Spider-Man", "Venom", "Knives Out", 
+            "12 Angry Men", "Heat", "The Godfather", "Wednesday", "Stranger Things", 
+            "Interstellar", "Inception", "Gladiator", "Fight Club", "Pulp Fiction", 
+            "The Dark Knight", "Chernobyl", "Better Call Saul", "Dexter", "The Witcher"
+        ],
+        sport: [
+            "Real Madrid", "Barcelone", "Messi", "Ronaldo", "Botola Pro", "La Liga", 
+            "Wydad", "Raja", "Tennis", "Ping Pong", "Basketball", "Handball", 
+            "L-Arbya (Kora)", "Marathon", "Arbitre (7akam)", "Entraîneur (Moudarrib)", 
+            "Mbappé", "Neymar", "Gant (Boxe)", "Sabhat (Running)", "Stade (Terrain)", 
+            "Salle de sport", "Morocco (Mntakhab)", "Égypte", "Champions League", 
+            "Coupe du Monde", "Pénalité", "Corner", "Guerouj", "Badr Hari", 
+            "Achraf Hakimi", "Ziyech", "Karate", "Taekwondo", "Haaland", "Vinicius", 
+            "Milan", "Liverpool", "Manchester United", "Arsenal", "Supra", "Formula 1"
+        ],
+        flags: [
+            "Maroc", "Tunisie", "Algérie", "Libye", "France", "Italie", "Espagne", 
+            "Portugal", "USA (Amrika)", "Canada", "Brésil", "Argentine", "Japon", 
+            "Chine", "Saoudia", "Émirats", "Égypte", "Allemagne", "Angleterre", 
+            "Turquie", "Grèce", "Qatar", "Koweït", "Russie", "Ukraine", "Sénégal", "Mali",
+            "Palestine", "Belgique", "Pays-Bas", "Mexique", "Maroc (Raya)", "Suisse"
+        ],
+        objects: [
+            "Machta (Peigne)", "Brosse à dents", "M9ss (Ciseaux)", "Zouwar", "Stylo", 
+            "Crayon", "Sariout (Clé)", "Télécommande", "Mraya (Miroir)", "Ndadar (Lunettes)", 
+            "Talafof (Phone)", "Tablette", "Ktab (Livre)", "Dftar (Cahier)", "Magana (Montre)", 
+            "Réveil", "Mkhda (Oreiller)", "Ghta (Couverture)", "Kourssi (Chaise)", "Namossiya (Lit)", 
+            "Chkara (Sac)", "Portefeuille", "Paraflu (Parapluie)", "Casquette", "Kas (Verre)", 
+            "Ghefna (Tasse)", "Tbla (Table)", "Bureau", "Chama3 (Bougie)", "Bila (Torche)", 
+            "Bab", "Serjem (Fenêtre)", "Stal", "Gass3a", "Jouj (Briquet)", "Tfaya", "Parfum", "Silouane"
+        ],
+        amakin: [
+            "Mahata (Gare)", "Matar (Aéroport)", "Sso9 (Marché)", "Marjane", "Jardin", 
+            "Ghaba (Forêt)", "Bahr (Plage)", "Piscine", "Rabat", "Salé", "Casablanca", 
+            "Marrakech", "Madrassa (École)", "Faculté (Université)", "Sbitar (Hôpital)", 
+            "Pharmacie", "Café", "Restaurant", "Gareden (Parc)", "Zoo", "Mellah", 
+            "Medina L-Qdima", "Sallon", "Kouzina (Cuisine)", "Banque", "Poste", 
+            "Khayma (Tente)", "Villa", "Mosquée (Jame3)", "Zaouia", "Ksar (Palais)", 
+            "Borj (Tour)", "Agadir", "Tangier", "Fès", "Chefchaouen", "Oujda", "Meknès"
+        ],
+        anime: [
+            "Luffy", "Naruto", "Goku", "Vegeta", "Zoro", "Sanji", "One Piece", 
+            "Attack on Titan", "Demon Slayer", "Jujutsu Kaisen", "Sharingan", "Rinnegan", 
+            "Death Note", "Code Geass", "Light Yagami", "L", "Hunter x Hunter", 
+            "Naruto Shippuden", "Killua", "Gon", "Saitama", "Genos", "Itachi", 
+            "Sasuke", "Bleach", "Fairy Tail", "Otaku", "Gamer", "Madara", "Hashirama",
+            "Eren Yeager", "Levi Ackerman", "Sukuna", "Gojo Satoru", "Deku", "Kaido"
+        ],
+        tech: [
+            "iPhone", "Samsung", "PlayStation", "Xbox", "WhatsApp", "Telegram", 
+            "Instagram", "TikTok", "PC (Ordinateur)", "Tablette", "Wi-Fi", "4G / 5G", 
+            "Google", "ChatGPT", "Netflix", "YouTube", "Souris (Mouse)", "Clavier", 
+            "Écouteurs", "Casque", "Imprimante", "Scanner", "Télévision Smart", 
+            "Projecteur", "Powerbank (Batterie)", "Chargeur", "Flash (Clé USB)", 
+            "Disque Dur", "Apple Watch", "Smart Band", "Windows", "Mac OS", 
+            "Facebook", "X (Twitter)", "Application", "Site Web", "Code", "Hacker",
+            "AI (Zouka)", "GitHub", "Linux", "Bluetooth", "Setup Gaming", "Cyber"
+        ],
+        mihan: [
+            "Njar (Menuisier)", "Heddad (Forgeron)", "Tbib (Médecin)", "Fermli (Infirmier)", 
+            "Mohandiss (Ingénieur)", "Architecte", "Khiyat (Tailleur)", "Hajjam (Coiffeur)", 
+            "Bennay (Maçon)", "Sregh (Peintre)", "Pilote (Tayyar)", "Chauffeur", 
+            "Polici (Chorti)", "Gendarme", "Oustad (Prof)", "Directeur", "Blombiyyi (Plombier)", 
+            "Électricien", "Avocat (Mouhami)", "7akam (Juge)", "Fellah (Agriculteur)", 
+            "Sayyad (Pêcheur)", "Cuisinier (Chef)", "Serveur", "Bna9ess (Customs)", "Moutarijam"
+        ],
+        marcat: [
+            "Nike", "Adidas", "Redmi (Xiaomi)", "Oppo", "Ferrari", "Lamborghini", 
+            "Mercedes", "BMW", "Apple", "Microsoft", "Zara", "Gucci", "Sony", 
+            "Samsung", "Coca-Cola", "Pepsi", "Puma", "Reebok", "Toyota", "Dacia", 
+            "Lacoste", "Louis Vuitton", "Dior", "Chanel", "Audi", "Porsche", "Rolex"
+        ],
+        games: [
+            "Minecraft", "Roblox", "Ghomayda (Cache-cache)", "Kora (Football)", "Free Fire", 
+            "PUBG", "GTA 5", "FIFA / EA Sports FC", "Fortnite", "Call of Duty", 
+            "Clash of Clans", "Clash Royale", "Ludo", "Échecs (Ssatranj)", "Subway Surfers", 
+            "Candy Crush", "Among Us", "Fall Guys", "Counter-Strike", "Valorant",
+            "League of Legends", "Rocket League", "God of War", "Spider-Man PS5"
+        ],
+        celebs: [
+            "Cristiano Ronaldo", "Neymar", "Saad Lamjarred", "Zouhair Bahaoui", "Lionel Messi", 
+            "Kylian Mbappé", "RedOne", "ElGrandeToto", "Achraf Hakimi", "Yassine Bounou", 
+            "Dounia Batma", "Asma Lmnawar", "Eminem", "Drake", "MrBeast", "PewDiePie", 
+            "Elon Musk", "Mark Zuckerberg", "Gad Elmaleh", "Hassan El Fad", "Lbenj", "Stormy"
+        ],
+        na9l: [
+            "Ssarokh (Fusée)", "Tiytara (Avion)", "Ghawassa (Sous-marin)", "Babour (Bateau)", 
+            "Tomobil (Voiture)", "Motor (Moto)", "Train (L-Machtina)", "Tramway", 
+            "Bisiklet (Vélo)", "Trottinette", "Taxis", "Bus (Tobis)", "Ambulance", 
+            "Camion", "Hélicoptère", "Jet Ski", "Quad", "Caravane"
+        ],
+        alwan: [
+            "Khel (Noir)", "Byad (Blanc)", "7mer (Rouge)", "Zre9 (Bleu)", "Khder (Vert)",
+            "Sfer (Jaune)", "Limouni (Orange)", "Chibi (Bleu ciel)", "Griz (Gris)",
+            "Mouti (Marron)", "Rose", "Violet", "Golden (Dhebi)", "Argenté"
+        ],
+        malabis: [
+            "T-Shirt", "Serwal (Pantalon)", "Vesta (Veste)", "Kabpout (Manteau)",
+            "Tricot", "Sbat (Chaussures)", "Sndala", "Takiya", "Kachkol", "Ligat (Gants)",
+            "Forma (Jersey)", "Pyjama", "Costume", "Jellaba", "Gandoura"
+        ],
+        cartoons: [
+            "Conan", "Dragon Ball", "Pokemon", "Captain Majid", "Tom & Jerry", 
+            "Ben 10", "Spacetoon", "Simpsons", "SpongeBob", "Scooby-Doo", 
+            "Naruto", "Avatar (Aang)", "Gumball", "Ben 10", "Batman"
+        ],
+        traditions_marocaine: [
+            "Couscous (Kousksou)", "Rfissa", "Tajine", "Caftan (9ftan)", "Hammam (7ammam)", 
+            "Takchita", "Jellaba Maghribiya", "Belgha (Babouche)", "Atay b nna3na3", "Msemmen", 
+            "Harcha", "Sfenzj", "Tbourida (Fantasia)", "Dakka Marrakchia", "Gnaoua", 
+            "Zellij Maghribi", "Pastilla (Bstitla)", "Briouat", "Zearf (Sffa)", "Mechoui", 
+            "Harira (7rira Maghribiya)", "Chebakia", "Sellou (Sffouf)", "Koutchi", "Gharbal"
+        ],
+        tabi3a_kawn: [
+            "L-9amar (Lune)", "L-Mirikh (Mars)", "Ssma (Ciel)", "L-2ard (Terre)", 
+            "Chmch (Soleil)", "Zouhal (Saturne)", "Nshma (Étoile)", "Majarra (Galaxie)", 
+            "Bahr (Mer)", "Ghaba (Forêt)", "Jbel (Montagne)", "Wad (Rivière)", 
+            "S7aba (Nuage)", "Chta (Pluie)", "Tlej (Neige)", "Ajjaj (Tempête)", 
+            "Volcan (Borkan)", "Zilzal (Séisme)", "Tsunami", "Météorite (Chihab)", 
+            "Fusée (Ssarokh)", "Astronaute", "Atmosphère", "Gravité"
+        ]
+    };
+
+    const categoryNames = {
+        animals: "Hayawanat",
+        makla: "Makla",
+        aflam: "Cinema",
+        sport: "Sports",
+        flags: "Boldan",
+        objects: "Achya2",
+        amakin: "Amakin",
+        anime: "Anime",
+        tech: "Technologie",
+        mihan: "Mihan",
+        marcat: "Marques",
+        games: "Al3ab",
+        celebs: "Chakhssiyat",
+        na9l: "Wassa2il Na9l",
+        alwan: "Alwân",
+        malabis: "Malâbis",
+        cartoons: "Cartoons / Spacetoon",
+        traditions_marocaine: "Taqâfa Mghribiya",
+        tabi3a_kawn: "Ṭabi3a o Kawn"
+    };
+
+    let availableWords = {};
+    let gameWords = [];
+    let playerNamesList = []; 
+    let currentPlayerIndex = 0;
+    let isCardOpen = false;
+    let currentCategoryLabel = "";
+    let selectedCategories = ['all']; 
+
+    // TIMERS MANAGEMENT GLOBALS
+    let gameInterval = null;
+    let totalGameTime = 180; // 3 Minutes d l-hadra fabor
+
+    const clickSound = new Audio("https://cdn.jsdelivr.net/gh/IonDen/ion.sound@3.0.7/sounds/button_click.mp3");
+    const successSound = new Audio("https://cdn.jsdelivr.net/gh/IonDen/ion.sound@3.0.7/sounds/bell_ring.mp3");
+    const spySound = new Audio("https://cdn.jsdelivr.net/gh/IonDen/ion.sound@3.0.7/sounds/bell_ring.mp3");
+    const alarmSound = new Audio("https://assets.mixkit.co/active_storage/sfx/2869/2869-84.wav"); 
+    const bgMysteryMusic = document.getElementById('bg-mystery-music');
+    const tiktakSound = document.getElementById('audio-tiktak'); // 👈 Grabbed from HTML
+
+    clickSound.load();
+    successSound.load();
+    spySound.load();
+    alarmSound.load();
+
+    function getRandomWord(selectedCategory) {
+        if (!availableWords[selectedCategory] || availableWords[selectedCategory].length === 0) {
+            availableWords[selectedCategory] = [...database[selectedCategory]];
+        }
+        const randomIndex = Math.floor(Math.random() * availableWords[selectedCategory].length);
+        const selectedWord = availableWords[selectedCategory][randomIndex];
+        availableWords[selectedCategory].splice(randomIndex, 1);
+        return selectedWord;
+    }
+
+    /* CUSTOM SELECT LOGIC (FIXED WINDOW EVENT ERROR) */
+    if (typeof toggleDropdown !== 'function') {
+        window.toggleDropdown = function() {
+            const panel = document.getElementById('options-panel');
+            const trigger = document.getElementById('select-trigger');
+            panel.classList.toggle('show');
+            trigger.classList.toggle('open-active');
+        }
+    }
+
+    function selectOption(value, text, iconClass) {
+        const currentEvent = window.event || arguments.callee.caller.arguments[0];
+        const optionElement = currentEvent ? currentEvent.currentTarget : null;
+        
+        if (value === 'all') {
+            selectedCategories = ['all'];
+            document.querySelectorAll('.option-item').forEach(item => {
+                item.classList.remove('active-selection');
+            });
+            if (optionElement) optionElement.classList.add('active-selection');
+            document.getElementById('selected-text').innerText = 'Koulchi (Mélange)';
+            document.getElementById('selected-icon').className = `${iconClass} main-icon`;
+        } else {
+            if (selectedCategories.includes('all')) {
+                selectedCategories = [];
+                document.querySelectorAll('.option-item').forEach(item => {
+                    item.classList.remove('active-selection');
+                });
+            }
+            
+            const index = selectedCategories.indexOf(value);
+            if (index > -1) {
+                selectedCategories.splice(index, 1);
+                if (optionElement) optionElement.classList.remove('active-selection');
+            } else {
+                selectedCategories.push(value);
+                if (optionElement) optionElement.classList.add('active-selection');
+            }
+            
+            if (selectedCategories.length === 0) {
+                selectedCategories = ['all'];
+                document.querySelectorAll('.option-item').forEach(item => {
+                    item.classList.remove('active-selection');
+                });
+                const allOption = document.querySelector(".option-item[onclick*=\"all\"]");
+                if (allOption) allOption.classList.add('active-selection');
+                document.getElementById('selected-text').innerText = 'Koulchi (Mélange)';
+                document.getElementById('selected-icon').className = 'fa-solid fa-layer-group main-icon';
+                return;
+            }
+            
+            updateTriggerPreview();
+        }
+    }
+
+    function updateTriggerPreview() {
+        const selectedText = document.getElementById('selected-text');
+        
+        if (selectedCategories.includes('all')) {
+            selectedText.innerText = 'Koulchi (Mélange)';
+            document.getElementById('selected-icon').className = 'fa-solid fa-layer-group main-icon';
+        } else if (selectedCategories.length === 1) {
+            const catKey = selectedCategories[0];
+            const catLabel = categoryNames[catKey];
+            selectedText.innerText = catLabel;
+            const optionElement = document.querySelector(".option-item[onclick*='" + catKey + "']");
+            if (optionElement) {
+                const icon = optionElement.querySelector('i');
+                if (icon) {
+                    document.getElementById('selected-icon').className = icon.className + ' main-icon';
+                }
+            }
+        } else if (selectedCategories.length === 2) {
+            const labels = selectedCategories.map(cat => categoryNames[cat]).join(", ");
+            selectedText.innerText = labels;
+        } else {
+            selectedText.innerText = 'Multiple Categories';
+        }
+    }
+
+    window.addEventListener('click', function(e) {
+        const selectBox = document.querySelector('.custom-select-box');
+        if (selectBox && !selectBox.contains(e.target)) {
+            const panel = document.getElementById('options-panel');
+            const trigger = document.getElementById('select-trigger');
+            if (panel) panel.classList.remove('show');
+            if (trigger) trigger.classList.remove('open-active');
+        }
+    });
+
+    /* OPTIONAL PLAYERS NAMES SECTION TOGGLE */
+    function toggleNamesSection() {
+        clickSound.play();
+        const container = document.getElementById('players-names-container');
+        const btn = document.getElementById('toggle-names-btn');
+        
+        if (container.style.display === 'none') {
+            container.style.display = 'flex';
+            btn.innerHTML = `<i class="fa-solid fa-eye-slash"></i> Khbi Smiyat l-La3ibin`;
+        } else {
+            container.style.display = 'none';
+            btn.innerHTML = `<i class="fa-solid fa-pen-to-square"></i> Modifi Smiyat l-La3ibin (Ikhtiyari)`;
+        }
+    }
+
+    /* GAME PLAY LOGIC */
+    function startGame() {
+        clickSound.play();
+        
+        clearInterval(gameInterval);
+        
+        // 💡 Unlock Audio context safely right at button interaction
+        if (tiktakSound) {
+            tiktakSound.muted = true;
+            tiktakSound.play().then(() => {
+                tiktakSound.pause();
+                tiktakSound.muted = false;
+                tiktakSound.currentTime = 0;
+            }).catch(err => console.log("Audio unlock tracking:", err));
+        }
+        
+        bgMysteryMusic.volume = 0.3; 
+        bgMysteryMusic.play().catch(err => console.log("Music play blocked:", err));
+
+        const totalPlayers = parseInt(document.getElementById('total-players').value);
+        const container = document.getElementById('players-names-container');
+
+        playerNamesList = [];
+        if (container && container.style.display === 'flex') {
+            const inputs = container.querySelectorAll('.player-name-input');
+            inputs.forEach((input, index) => {
+                let nameVal = input.value.trim();
+                playerNamesList.push(nameVal !== "" ? nameVal : `Joueur ${index + 1}`);
+            });
+        } else {
+            for (let i = 1; i <= totalPlayers; i++) {
+                playerNamesList.push(`Joueur ${i}`);
+            }
+        }
+
+        let wordPool = [];
+        let categoryLabels = [];
+        
+        if (selectedCategories.includes('all')) {
+            const keys = Object.keys(database);
+            const randomCat = keys[Math.floor(Math.random() * keys.length)];
+            wordPool = [...database[randomCat]];
+            currentCategoryLabel = categoryNames[randomCat];
+        } else {
+            selectedCategories.forEach(catKey => {
+                if (database[catKey]) {
+                    wordPool.push(...database[catKey]);
+                    categoryLabels.push(categoryNames[catKey]);
+                }
+            });
+            currentCategoryLabel = categoryLabels.length <= 2 
+                ? categoryLabels.join(", ")
+                : `${categoryLabels.length} Categories`;
+        }
+        
+        for (let i = wordPool.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [wordPool[i], wordPool[j]] = [wordPool[j], wordPool[i]];
+        }
+        
+        const chosenWord = wordPool[Math.floor(Math.random() * wordPool.length)];
+
+        let totalSpies = 1; 
+        const randPercent = Math.random() * 100;
+
+        if (randPercent > 50) {
+            const options = [0, 2, 3];
+            totalSpies = options[Math.floor(Math.random() * options.length)];
+            if (totalSpies >= totalPlayers - 1) {
+                totalSpies = Math.max(1, totalPlayers - 2); 
+            }
+        }
+
+        gameWords = Array(totalPlayers).fill(chosenWord);
+        
+        let spiesPlaced = 0;
+        while (spiesPlaced < totalSpies) {
+            let randomIndex = Math.floor(Math.random() * totalPlayers);
+            if (gameWords[randomIndex] === chosenWord) {
+                gameWords[randomIndex] = "SPY_FLAG"; 
+                spiesPlaced++;
+            }
+        }
+
+        currentPlayerIndex = 0;
+        showScreen('screen-distribute');
+        setupPlayerTurn();
+    }
+
+    function setupPlayerTurn() {
+        isCardOpen = false;
+        
+        const flipCardInner = document.getElementById('flipCardInner');
+        if (flipCardInner) flipCardInner.classList.remove('flipped');
+        
+        const nextBtn = document.getElementById('next-player-btn');
+        if (nextBtn) nextBtn.disabled = true;
+        
+        const titleElem = document.getElementById('player-title');
+        if (titleElem) titleElem.innerHTML = `<i class="fa-solid fa-user"></i> ${playerNamesList[currentPlayerIndex]}`;
+    }
+
+    function flipCard() {
+        const flipCardInner = document.getElementById('flipCardInner');
+        const cardBackView = document.getElementById('cardBackView');
+        const nextBtn = document.getElementById('next-player-btn');
+        
+        if (!isCardOpen) {
+            let currentWord = gameWords[currentPlayerIndex];
+            const cardRoleIcon = document.getElementById('cardRoleIcon');
+            const cardRoleTitle = document.getElementById('cardRoleTitle');
+            const cardSecretWord = document.getElementById('cardSecretWord');
+            const cardCategory = document.getElementById('cardCategory');
+            
+            if (cardBackView) cardBackView.classList.remove('glow-spy', 'glow-citizen');
+            
+            if (currentWord === "SPY_FLAG") {
+                spySound.currentTime = 0;
+                spySound.play();
+                
+                if (cardBackView) cardBackView.classList.add('glow-spy');
+                
+                if (cardRoleIcon) cardRoleIcon.className = 'fa-solid fa-user-ninja flip-card-role-icon';
+                if (cardRoleIcon) cardRoleIcon.style.color = '#fee2e2';
+                if (cardRoleTitle) cardRoleTitle.textContent = 'Nta Spy!';
+                if (cardRoleTitle) cardRoleTitle.style.color = '#fee2e2';
+                if (cardSecretWord) cardSecretWord.textContent = '🕵️';
+                
+                if (cardCategory) {
+                    cardCategory.textContent = `L-Catégorie: ${currentCategoryLabel}`;
+                    cardCategory.style.display = 'block';
+                    cardCategory.style.color = '#fca5a5';
+                }
+            } else {
+                successSound.currentTime = 0;
+                successSound.play();
+                
+                if (cardBackView) cardBackView.classList.add('glow-citizen');
+                
+                if (cardRoleIcon) cardRoleIcon.className = 'fa-solid fa-unlock-keyhole flip-card-role-icon';
+                if (cardRoleIcon) cardRoleIcon.style.color = '#d1fae5';
+                if (cardRoleTitle) cardRoleTitle.textContent = 'Civilian';
+                if (cardRoleTitle) cardRoleTitle.style.color = '#d1fae5';
+                if (cardSecretWord) cardSecretWord.textContent = currentWord;
+                
+                if (cardCategory) cardCategory.style.display = 'none';
+            }
+            
+            if (flipCardInner) flipCardInner.classList.add('flipped');
+            if (nextBtn) nextBtn.disabled = false;
+            isCardOpen = true;
+        } else {
+            if (flipCardInner) flipCardInner.classList.remove('flipped');
+            if (nextBtn) nextBtn.disabled = true;
+            isCardOpen = false;
+        }
+    }
+
+    function nextPlayer() {
+        clickSound.play();
+        currentPlayerIndex++;
+        
+        if (currentPlayerIndex < gameWords.length) {
+            setTimeout(() => {
+                setupPlayerTurn();
+            }, 300);
+        } else {
+            showScreen('screen-play');
+            startGameTimer(); 
+        }
+    }
+
+    /* PREMIUM TIMER DYNAMIC LOGIC WITH ADVANCED ALERTS */
+    function startGameTimer() {
+        clearInterval(gameInterval);
+        totalGameTime = 180; // Reset to 3 minutes
+        
+        const countdownText = document.getElementById('game-countdown-text');
+        const timerCircle = document.querySelector('.timer-circle');
+        
+        if (countdownText) countdownText.innerText = "03:00";
+        if (timerCircle) timerCircle.classList.remove('timer-urgent');
+
+        gameInterval = setInterval(() => {
+            totalGameTime--;
+            
+            let minutes = Math.floor(totalGameTime / 60);
+            let seconds = totalGameTime % 60;
+            
+            minutes = minutes < 10 ? "0" + minutes : minutes;
+            seconds = seconds < 10 ? "0" + seconds : seconds;
+            
+            if (countdownText) countdownText.innerText = `${minutes}:${seconds}`;
+            
+            // 🚨 ALERT 30 SECONDES L-KHRA: Pulse effect + Tik Tak Sound
+            if (totalGameTime === 30) {
+                if (timerCircle) timerCircle.classList.add('timer-urgent');
+                if (tiktakSound) {
+                    tiktakSound.currentTime = 0;
+                    tiktakSound.play().catch(e => console.log("TikTak audio block tracking:", e));
+                }
+            }
+            
+            if (totalGameTime <= 0) {
+                clearInterval(gameInterval);
+                if (tiktakSound) tiktakSound.pause(); // Stop ticking when game ends
+                alarmSound.play(); 
+                
+                setTimeout(() => {
+                    document.getElementById('custom-alert').classList.remove('hidden');
+                }, 500);
+            }
+        }, 1000);
+    }
+
+    /* RESET GAME (FIXED & CLEANED TO HIDE REVEAL SECTIONS) */
+    function resetGame() {
+        clickSound.play();
+        clearInterval(gameInterval); 
+        
+        if (tiktakSound) {
+            tiktakSound.pause();
+            tiktakSound.currentTime = 0;
+        }
+        
+        // 🧼 Khbi gaa3 custom elements d l-reveal bach round jdid ybda clean
+        document.getElementById('reveal-roles-section').classList.add('hidden');
+        document.getElementById('roles-summary-list').classList.add('hidden');
+        document.getElementById('reveal-btn').classList.remove('hidden'); // Red l-bouton ybân lil round jdid
+        
+        showScreen('screen-setup');
+    }
+
+    function showScreen(screenId) {
+        document.querySelectorAll('.screen').forEach(screen => {
+            screen.classList.remove('active');
+        });
+        const targetScreen = document.getElementById(screenId);
+        if (targetScreen) targetScreen.classList.add('active');
+
+        if (screenId === 'screen-distribute') {
+            bgMysteryMusic.volume = 0.15; 
+            bgMysteryMusic.play().catch(error => {
+                console.log("Audio play blocked by browser:", error);
+            });
+        }
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+        updatePlayerInputs();
+    });
+
+    function incrementPlayers() {
+        const input = document.getElementById('total-players');
+        const currentValue = parseInt(input.value);
+        const max = parseInt(input.getAttribute('max'));
+        
+        if (currentValue < max) {
+            input.value = currentValue + 1;
+            updatePlayerInputs(); 
+        }
+    }
+
+    function decrementPlayers() {
+        const input = document.getElementById('total-players');
+        const currentValue = parseInt(input.value);
+        const min = parseInt(input.getAttribute('min'));
+        
+        if (currentValue > min) {
+            input.value = currentValue - 1;
+            updatePlayerInputs(); 
+        }
+    }
+
+    function updatePlayerInputs() {
+        const container = document.getElementById('players-names-container');
+        if (!container) return;
+        
+        const totalPlayers = parseInt(document.getElementById('total-players').value);
+        
+        const existingNames = [];
+        const inputs = container.querySelectorAll('input');
+        inputs.forEach(input => existingNames.push(input.value));
+
+        container.innerHTML = '';
+
+        for (let i = 1; i <= totalPlayers; i++) {
+            const nameWrapper = document.createElement('div');
+            nameWrapper.className = 'name-input-wrapper';
+
+            const savedValue = existingNames[i - 1] || '';
+
+            nameWrapper.innerHTML = `
+                <span class="player-number">#${i}</span>
+                <input type="text" class="player-name-input" placeholder="Smiyat l-la3ib ${i}" value="${savedValue}">
+            `;
+            
+            container.appendChild(nameWrapper);
+        }
+    }
+
+    /* 📥 DYNAMIC EVENTS FOR CUSTOM ALERT & REVEAL ROLES */
+    document.getElementById('close-alert-btn').addEventListener('click', function() {
+        document.getElementById('custom-alert').classList.add('hidden');
+        // Biyyen s-section dyal reveal roles ghir ndiro OK
+        document.getElementById('reveal-roles-section').classList.remove('hidden');
+    });
+
+    document.getElementById('reveal-btn').addEventListener('click', function() {
+        const rolesUl = document.getElementById('roles-ul');
+        rolesUl.innerHTML = ''; // N9iw l-lista 9bel ma n-7tto l-data jdid
+
+        // loop 3la 7sab array d playerNamesList li fiha s-smiyat o gameWords li fiha l-wra9
+        playerNamesList.forEach((name, index) => {
+            const word = gameWords[index];
+            const li = document.createElement('li');
+            li.style.padding = '8px 4px';
+            li.style.borderBottom = '1px solid #334155';
+            li.style.display = 'flex';
+            li.style.justifyContent = 'space-between';
+            li.style.fontSize = '0.95rem';
+            
+            if (word === "SPY_FLAG") {
+                li.innerHTML = `<span style="color: #fff; font-weight: 600;">👤 ${name}</span> <span style="color: #ef4444; font-weight: bold; text-shadow: 0 0 5px rgba(239,68,68,0.3);">🕵️ SPY</span>`;
+            } else {
+                li.innerHTML = `<span style="color: #94a3b8;">👤 ${name}</span> <span style="color: #10b981; font-weight: 600;">📜 ${word}</span>`;
+            }
+            rolesUl.appendChild(li);
+        });
+
+        document.getElementById('roles-summary-list').classList.remove('hidden');
+        document.getElementById('reveal-btn').classList.add('hidden'); // Khbi l-bouton mni t-bân l-lista
+    });
+</script>
+</body>
+</html>
